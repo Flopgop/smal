@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout disableAnsi="false" pattern="%highlight{[%uptime] [%-8t] [%-5level]}{TRACE=white bold, DEBUG=white bold, INFO=cyan bold, WARN=yellow bold, ERROR=bright_red bold, FATAL=bright_red bold} %msg%n"/>
+        </Console>
+        <RollingFile name="FileAppender" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.tar.gz">
+            <PatternLayout disableAnsi="true" pattern="[%uptime] [%-8t] [%-5level] %replace{%msg}{\x1B\[[0-9;]*[a-zA-Z]}{}%n"/>
+            <Policies>
+                <OnStartupTriggeringPolicy/>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy fileIndex="nomax"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="Console" level="debug"/>
+            <AppenderRef ref="FileAppender" level="trace"/>
+        </Root>
+    </Loggers>
+</Configuration>

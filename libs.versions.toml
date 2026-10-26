@@ -1,0 +1,12 @@
+[versions]
+annotations = "26.1.0"
+msal4j = "1.30.0-beta"
+okhttp = "5.5.1"
+moshi = "1.15.2"
+
+[libraries]
+annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+
+msal4j = { module = "com.microsoft.azure:msal4j", version.ref = "msal4j" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
