@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+// TODO: this is a really good place to add more auth methods, PublicClientApplication#acquireToken has like 9 overloads
 public sealed interface MicrosoftLogin {
     CompletableFuture<IAuthenticationResult> authenticate(PublicClientApplication pca);
 
