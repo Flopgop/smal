@@ -9,10 +9,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 // TODO: this is a really good place to add more auth methods, PublicClientApplication#acquireToken has like 9 overloads
-public sealed interface MicrosoftLogin {
+public sealed interface LoginFlow {
     CompletableFuture<IAuthenticationResult> authenticate(PublicClientApplication pca);
 
-    record DeviceCodeAuth(Consumer<DeviceCode> presenter) implements MicrosoftLogin {
+    record DeviceCodeAuth(Consumer<DeviceCode> presenter) implements LoginFlow {
         @Override
         public CompletableFuture<IAuthenticationResult> authenticate(PublicClientApplication pca) {
             DeviceCodeFlowParameters params = DeviceCodeFlowParameters.builder(Set.of("XboxLive.signin", "offline_access"), presenter)
@@ -23,7 +23,7 @@ public sealed interface MicrosoftLogin {
     }
 
     // TODO: InteractiveRequestParameters has a lot of parameters
-    record BrowserAuth(OpenBrowserAction browserAction, URI uri) implements MicrosoftLogin {
+    record BrowserAuth(OpenBrowserAction browserAction, URI uri) implements LoginFlow {
         @Override
         public CompletableFuture<IAuthenticationResult> authenticate(PublicClientApplication pca) {
             SystemBrowserOptions browserOptions = SystemBrowserOptions.builder()
@@ -40,7 +40,7 @@ public sealed interface MicrosoftLogin {
     }
 
     // used pretty much exclusively for refreshing state.
-    record SilentAuth(String microsoftUsername) implements MicrosoftLogin {
+    record SilentAuth(String microsoftUsername) implements LoginFlow {
         @Override
         public CompletableFuture<IAuthenticationResult> authenticate(PublicClientApplication pca) {
             return pca.getAccounts().thenCompose(accounts -> {

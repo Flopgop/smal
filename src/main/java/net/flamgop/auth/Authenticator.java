@@ -20,14 +20,14 @@ public final class Authenticator {
     }
 
     public CompletableFuture<AuthSession> refresh(@NotNull AuthSession session, @Nullable AuthPhaseListener listener) {
-        return this.authenticate(new MicrosoftLogin.SilentAuth(session.microsoftUsername()), listener);
+        return this.authenticate(new LoginFlow.SilentAuth(session.microsoftUsername()), listener);
     }
 
-    public CompletableFuture<AuthSession> authenticate(@NotNull MicrosoftLogin microsoftLogin, @Nullable AuthPhaseListener listener) {
+    public CompletableFuture<AuthSession> authenticate(@NotNull LoginFlow loginFlow, @Nullable AuthPhaseListener listener) {
         AuthPhaseListener safeListener = listener != null ? listener : ($0) -> {};
 
         safeListener.progress(AuthPhase.MICROSOFT_LOGIN);
-        return microsoftLogin.authenticate(pca).thenComposeAsync(result -> {
+        return loginFlow.authenticate(pca).thenComposeAsync(result -> {
             String msToken = result.accessToken();
             String username = result.account().username();
 
