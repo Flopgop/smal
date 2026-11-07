@@ -1,6 +1,7 @@
 package net.flamgop.auth.minecraft;
 
 import net.flamgop.auth.AuthSession;
+import net.flamgop.auth.exception.MalformedPayloadException;
 import net.flamgop.auth.internal.NetHelper;
 import net.flamgop.auth.json.minecraft.*;
 import okhttp3.*;
@@ -26,7 +27,8 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_QUERY_PLAYER_PROFILE.toString(),
                 MinecraftProfileResponse.ADAPTER,
-                dto -> dto.uuid() == null ? "Malformed profile response, missing ID" : null,
+                response -> null,
+                dto -> dto.uuid() == null ? new MalformedPayloadException("Malformed profile response, missing ID") : null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         ).thenApply(dto -> new MinecraftProfile(
                 ParsingHelper.uuidFromString(dto.uuid()), // for some reason they strip the hyphens from the user uuid, but they don't in the skin/cape uuids??
@@ -61,6 +63,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_PLAYER_ATTRIBUTES.toString(),
                 PlayerAttributesResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -76,6 +79,7 @@ public final class MinecraftAPI {
                 request,
                 ModifyPlayerAttributesRequest.ADAPTER,
                 PlayerAttributesResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -86,6 +90,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_PRIVACY_BLOCKLIST.toString(),
                 BlocklistResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -97,6 +102,7 @@ public final class MinecraftAPI {
                 MinecraftEndpoints.MINECRAFT_SERVICES_PLAYER_CERTIFICATES.toString(),
                 RequestBody.create(new byte[0], null),
                 PlayerCertificatesResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -107,6 +113,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_QUERY_NAME_CHANGE_INFO.toString(),
                 NameChangeInfoResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -120,6 +127,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.checkNameAvailability(name).toString(),
                 NameAvailabilityResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -134,6 +142,7 @@ public final class MinecraftAPI {
                 MinecraftEndpoints.changeName(name).toString(),
                 RequestBody.create(new byte[0], null),
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -149,6 +158,7 @@ public final class MinecraftAPI {
                 request,
                 ChangeSkinRequest.ADAPTER,
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -170,6 +180,7 @@ public final class MinecraftAPI {
                 MinecraftEndpoints.MINECRAFT_SERVICES_SKINS.toString(),
                 body,
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -180,6 +191,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_ACTIVE_SKIN.toString(),
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -190,6 +202,7 @@ public final class MinecraftAPI {
                 client,
                 MinecraftEndpoints.MINECRAFT_SERVICES_ACTIVE_CAPE.toString(),
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
@@ -205,6 +218,7 @@ public final class MinecraftAPI {
                 request,
                 ShowCapeRequest.ADAPTER,
                 MinecraftProfileResponse.ADAPTER,
+                response -> null,
                 dto -> null,
                 builder -> builder.addHeader("Authorization", "Bearer " + session.minecraftToken())
         );
