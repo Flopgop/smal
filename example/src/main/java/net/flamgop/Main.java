@@ -37,6 +37,6 @@ public class Main {
 
         MinecraftAPI api = new MinecraftAPI(client);
         MinecraftProfile profile = api.queryPlayerProfile(session).get();
-        LOGGER.info("You ({}) have {} skins and {} capes", profile.name(), profile.skins().size(), profile.capes().size());
+        LOGGER.info("You ({}) have {} skin{} and {} cape{}", profile.name(), profile.skins().size(), profile.skins().size() == 1 ? "" : "s", profile.capes().size(), profile.capes().size() == 1 ? "" : "s");
     }
 }
