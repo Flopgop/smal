@@ -8,4 +8,5 @@ module net.flamgop.auth {
     exports net.flamgop.auth;
     exports net.flamgop.auth.minecraft;
     exports net.flamgop.auth.json.minecraft;
+    exports net.flamgop.auth.exception;
 }

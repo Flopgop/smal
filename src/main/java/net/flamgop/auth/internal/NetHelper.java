@@ -1,6 +1,10 @@
 package net.flamgop.auth.internal;
 
 import com.squareup.moshi.JsonAdapter;
+import net.flamgop.auth.exception.MinecraftLoginException;
+import net.flamgop.auth.exception.XboxLiveLoginException;
+import net.flamgop.auth.json.login.XboxLiveErrorResponse;
+import net.flamgop.auth.json.minecraft.MinecraftErrorResponse;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,9 +24,10 @@ public final class NetHelper {
             T payload,
             JsonAdapter<T> requestAdapter,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator
     ) {
-        return post(client, url, payload, requestAdapter, responseAdapter, validator, builder -> {});
+        return post(client, url, payload, requestAdapter, responseAdapter, responseValidator, payloadValidator, builder -> {});
     }
 
     public static <T, R> CompletableFuture<R> post(
@@ -31,7 +36,8 @@ public final class NetHelper {
             T payload,
             JsonAdapter<T> requestAdapter,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         RequestBody body = RequestBody.create(requestAdapter.toJson(payload), JSON);
@@ -42,7 +48,7 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     public static <R> CompletableFuture<R> postBody(
@@ -50,7 +56,8 @@ public final class NetHelper {
             String url,
             RequestBody body,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         Request.Builder requestBuilder = new Request.Builder()
@@ -59,7 +66,7 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     public static <T, R> CompletableFuture<R> put(
@@ -68,7 +75,8 @@ public final class NetHelper {
             T payload,
             JsonAdapter<T> requestAdapter,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         RequestBody body = RequestBody.create(requestAdapter.toJson(payload), JSON);
@@ -79,7 +87,7 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     public static <R> CompletableFuture<R> putBody(
@@ -87,7 +95,8 @@ public final class NetHelper {
             String url,
             RequestBody body,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         Request.Builder requestBuilder = new Request.Builder()
@@ -96,23 +105,25 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     public static <R> CompletableFuture<R> get(
             OkHttpClient client,
             String url,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator
     ) {
-        return get(client, url, responseAdapter, validator, builder -> {});
+        return get(client, url, responseAdapter, responseValidator, payloadValidator, builder -> {});
     }
 
     public static <R> CompletableFuture<R> get(
             OkHttpClient client,
             String url,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         Request.Builder requestBuilder = new Request.Builder()
@@ -121,23 +132,25 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     public static <R> CompletableFuture<R> delete(
             OkHttpClient client,
             String url,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator
     ) {
-        return delete(client, url, responseAdapter, validator, builder -> {});
+        return delete(client, url, responseAdapter, responseValidator, payloadValidator, builder -> {});
     }
 
     public static <R> CompletableFuture<R> delete(
             OkHttpClient client,
             String url,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator,
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator,
             Consumer<Request.Builder> headerCustomizer
     ) {
         Request.Builder requestBuilder = new Request.Builder()
@@ -146,14 +159,15 @@ public final class NetHelper {
                 .addHeader("Accept", "application/json");
 
         headerCustomizer.accept(requestBuilder);
-        return enqueue(client, requestBuilder.build(), responseAdapter, validator);
+        return enqueue(client, requestBuilder.build(), responseAdapter, responseValidator, payloadValidator);
     }
 
     private static <R> CompletableFuture<R> enqueue(
             OkHttpClient client,
             Request request,
             JsonAdapter<R> responseAdapter,
-            Function<R, String> validator
+            Function<Response, Throwable> responseValidator,
+            Function<R, Throwable> payloadValidator
     ) {
         CompletableFuture<R> future = new CompletableFuture<>();
 
@@ -167,22 +181,29 @@ public final class NetHelper {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (response) {
                     String responseBodyString = response.body().string();
-                    if (!response.isSuccessful()) {
-                        future.completeExceptionally(
-                                new RuntimeException("Request failed with HTTP " + response.code() + ": " + responseBodyString)
-                        );
+                    Throwable responseError = responseValidator != null ? responseValidator.apply(response) : null;
+                    if (responseError != null) {
+                        future.completeExceptionally(responseError);
                         return;
                     }
 
                     R dto = responseAdapter.fromJson(responseBodyString);
                     if (dto == null) {
-                        future.completeExceptionally(new RuntimeException("Malformed response payload: null DTO"));
+                        XboxLiveErrorResponse xblError = XboxLiveErrorResponse.ADAPTER.fromJson(responseBodyString);
+                        MinecraftErrorResponse minecraftError = MinecraftErrorResponse.ADAPTER.fromJson(responseBodyString);
+                        if (xblError != null) {
+                            future.completeExceptionally(new XboxLiveLoginException(xblError));
+                        } else if (minecraftError != null) {
+                            future.completeExceptionally(new MinecraftLoginException(minecraftError));
+                        } else {
+                            future.completeExceptionally(new RuntimeException("Malformed response payload: null DTO"));
+                        }
                         return;
                     }
 
-                    String validationError = validator != null ? validator.apply(dto) : null;
+                    Throwable validationError = payloadValidator != null ? payloadValidator.apply(dto) : null;
                     if (validationError != null) {
-                        future.completeExceptionally(new RuntimeException(validationError));
+                        future.completeExceptionally(validationError);
                         return;
                     }
 
